@@ -77,7 +77,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
      */
     protected function number_format_value($value)
     {
-        return (float) number_format($value, 2, '.', '');
+        return (float)number_format($value, 2, '.', '');
     }
 
     protected function prepare_shipping()
@@ -175,9 +175,9 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
                 $product_content = method_exists($product, 'get_description') ? $product->get_description() : $product->post->post_content;
                 // Calculates line amount and discounts.
                 $line_amount = $item['line_total'] + $item['line_tax'];
-                $discount_by_gateway = (float) $line_amount * ($this->gateway_discount / 100);
-                $commission_by_gateway = (float) $line_amount * ($this->commission / 100);
-                $item_amount =  $this->calculate_price($line_amount - $discount_by_gateway + $commission_by_gateway);
+                $discount_by_gateway = (float)$line_amount * ($this->gateway_discount / 100);
+                $commission_by_gateway = (float)$line_amount * ($this->commission / 100);
+                $item_amount = $this->calculate_price($line_amount - $discount_by_gateway + $commission_by_gateway);
                 $this->order_total += $this->number_format_value($item_amount);
 
                 // Add the item.
@@ -198,6 +198,22 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
                 ));
             }
         }
+
+        $order = $this->order->get_data();
+        if ($order['total'] <= $this->order_total) {
+            $otherDiscount = ($order['total'] - $this->order_total);
+            array_push($items, array(
+                'id' => 1234567890,
+                'title' => 'Discount (Others)',
+                'description' => 'Discount by others plugins',
+                'picture_url' => plugins_url('assets/images/cart.png', plugin_dir_path(__FILE__)),
+                'category_id' => get_option('_mp_category_id', 'others'),
+                'quantity' => 1,
+                'unit_price' => $this->number_format_value($otherDiscount),
+                'currency_id' => $this->site_data[$this->site_id]['currency']
+            ));
+        }
+
         return $items;
     }
 
@@ -210,11 +226,11 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
         $this->order_total += $this->number_format_value($ship_cost);
 
         return array(
-            'title'       => method_exists($this->order, 'get_id') ? $this->order->get_shipping_method() : $this->order->shipping_method,
+            'title' => method_exists($this->order, 'get_id') ? $this->order->get_shipping_method() : $this->order->shipping_method,
             'description' => __('Shipping service used by the store.', 'woocommerce-mercadopago'),
             'category_id' => get_option('_mp_category_id', 'others'),
-            'quantity'    => 1,
-            'unit_price'  => $this->number_format_value($ship_cost),
+            'quantity' => 1,
+            'unit_price' => $this->number_format_value($ship_cost),
         );
     }
 
@@ -225,7 +241,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
     {
         $items = array();
         foreach ($this->order->get_fees() as $fee) {
-            if ((float) $fee['total'] >= 0) {
+            if ((float)$fee['total'] >= 0) {
                 continue;
             }
 
@@ -233,7 +249,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
 
             $this->order_total += $this->number_format_value($final);
             array_push($items, array(
-                'title'       => sanitize_file_name(html_entity_decode(
+                'title' => sanitize_file_name(html_entity_decode(
                     strlen($fee['name']) > 230 ?
                         substr($fee['name'], 0, 230) . '...' : $fee['name']
                 )),
@@ -242,8 +258,8 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
                         substr($fee['name'], 0, 230) . '...' : $fee['name']
                 )),
                 'category_id' => get_option('_mp_category_id', 'others'),
-                'quantity'    => 1,
-                'unit_price'  => $this->number_format_value($final)
+                'quantity' => 1,
+                'unit_price' => $this->number_format_value($final)
             ));
         }
         return $items;
@@ -376,7 +392,7 @@ abstract class WC_WooMercadoPago_PreferenceAbstract extends WC_Payment_Gateway
     public function add_discounts_campaign()
     {
         return array(
-            'campaign_id' => (int) $this->checkout['campaign_id'],
+            'campaign_id' => (int)$this->checkout['campaign_id'],
             'coupon_amount' => ($this->site_data[$this->site_id]['currency'] == 'COP' || $this->site_data[$this->site_id]['currency'] == 'CLP') ?
                 floor($this->checkout['discount'] * $this->currency_ratio) : floor($this->checkout['discount'] * $this->currency_ratio * 100) / 100,
             'coupon_code' => strtoupper($this->checkout['coupon_code'])
